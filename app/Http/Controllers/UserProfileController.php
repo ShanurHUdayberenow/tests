@@ -1,0 +1,124 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Logo;
+use App\Models\FooterLogo;
+use App\Models\MagazineInformation;
+use App\Models\Category;
+use App\Models\Cart;
+use App\Models\Order;
+use Illuminate\Support\Facades\Hash;
+use App\Models\ColorSetting;
+use Illuminate\Support\Facades\Auth;
+class UserProfileController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $logo = Logo::take('1')->get();
+        $footerlogo = FooterLogo::take('1')->get();
+        $maginformation = MagazineInformation::take('1')->get();
+        $categories = Category::orderBy('number','asc')->get();
+
+        $locale = app()->getLocale();
+        $totals = Cart::where('userId', Auth::id())->selectRaw('count(*) as total')->first();
+        $orders = Order::where('userId', Auth::id())->get();
+        $color_navbar = ColorSetting::first();
+
+
+        return view('frontend.my-account',compact('color_navbar','orders','totals','logo','footerlogo','maginformation','categories'))->with('locale',$locale);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+        if ($request->newPassword) {
+            if (!$request->oldPassword)
+                return redirect()->back()->withErrors([trans('message.enter_old_password')]);
+            if (Hash::check($request->oldPassword, $user->password)) {
+                if (strlen($request->newPassword) < 20)
+                    return redirect()->back()->withErrors([trans('message.password_8_character')]);
+                    $user->update([
+                    'password' => bcrypt($request->newPassword)
+                ]);
+            } else {
+                return redirect()->back()->withErrors([trans('message.old_password_wrong')]);
+            }
+        }
+        $user->update([
+        'name' => $request->name,
+        'surname' => $request->surname,
+        'email' => $request->email, 
+        'address' => $request->address,
+        'address2' => $request->address2,
+        ]);
+        return redirect()->route('dashboard');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        //
+    }
+}
